@@ -6,6 +6,8 @@ use SCSEO\Admin\DocumentationPage;
 use SCSEO\Admin\RedirectsPage;
 use SCSEO\Admin\SettingsPage;
 use SCSEO\Frontend\AnalyticsOutput;
+use SCSEO\Frontend\AttachmentRedirect;
+use SCSEO\Frontend\FeedsDisabled;
 use SCSEO\Frontend\HeadOutput;
 use SCSEO\Frontend\RedirectHandler;
 use SCSEO\Frontend\SchemaOutput;
@@ -52,8 +54,10 @@ final class Plugin
             new HeadOutput($this->settings),
             new SchemaOutput($this->settings),
             new AnalyticsOutput($this->settings),
-            new SitemapFilters(),
+            new SitemapFilters($this->settings),
             new RedirectHandler(),
+            new AttachmentRedirect($this->settings),
+            new FeedsDisabled($this->settings),
         ];
 
         foreach ($features as $feature) {

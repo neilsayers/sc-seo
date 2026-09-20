@@ -122,6 +122,9 @@ final class SettingsPage implements Hookable
             'home_title' => \sanitize_text_field((string) ($data['home_title'] ?? '')),
             'home_description' => \sanitize_textarea_field((string) ($data['home_description'] ?? '')),
             'default_robots_noindex' => ! empty($data['default_robots_noindex']),
+            'disable_feeds' => ! empty($data['disable_feeds']),
+            'noindex_thin_archives' => ! empty($data['noindex_thin_archives']),
+            'redirect_attachment_pages' => ! empty($data['redirect_attachment_pages']),
             'default_social_image' => (int) ($data['default_social_image'] ?? 0),
             'title_templates' => $templates,
             'ga_measurement_id' => \preg_match('/^G-[A-Z0-9]+$/', $gaId) ? $gaId : '',
@@ -233,6 +236,26 @@ final class SettingsPage implements Hookable
                 <th scope="row">Default robots</th>
                 <td>
                     <label><input type="checkbox" name="scseo_settings[default_robots_noindex]" value="1" <?php \checked($s->get('default_robots_noindex')); ?>> Discourage search engines from indexing this entire site (noindex everywhere — for staging sites)</label>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">Feeds</th>
+                <td>
+                    <label><input type="checkbox" name="scseo_settings[disable_feeds]" value="1" <?php \checked($s->get('disable_feeds')); ?>> Turn off RSS/Atom feeds</label>
+                    <p class="description">Closes every feed WordPress generates by default — the main site feed plus a separate one per tag, per author, per comment thread and for search — and stops advertising them in the page &lt;head&gt;. Search engines find and crawl these even with nothing linking to them, and an unused feed just shows up in Search Console as low-value content nobody asked for. Leave this off if anyone actually subscribes to this site's RSS, or if it feeds a newsletter tool or reader integration.</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">Archive &amp; attachment cleanup</th>
+                <td>
+                    <p>
+                        <label><input type="checkbox" name="scseo_settings[noindex_thin_archives]" value="1" <?php \checked($s->get('noindex_thin_archives')); ?>> Noindex thin archive pages</label>
+                    </p>
+                    <p class="description">Marks the author archive, date archives, and any tag/category archive listing only one post as noindex. Each of those is a near-duplicate of content already indexed elsewhere — one post repeated under a different URL — and is exactly what Search Console reports as "Crawled" or "Discovered — currently not indexed". This tells search engines not to bother rather than leaving them to work it out per page.</p>
+                    <p style="margin-top:1em">
+                        <label><input type="checkbox" name="scseo_settings[redirect_attachment_pages]" value="1" <?php \checked($s->get('redirect_attachment_pages')); ?>> Redirect attachment pages</label>
+                    </p>
+                    <p class="description">WordPress gives every uploaded image its own standalone page containing nothing but that image and its title. Nothing on this site links to them on purpose, but search engines find and crawl them anyway — a common source of thin-content warnings. Turning this on sends a visit to one straight to the post or page it belongs to (or the homepage, if it isn't attached to anything) and drops attachments from the XML sitemap.</p>
                 </td>
             </tr>
             <tr>

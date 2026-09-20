@@ -11,12 +11,30 @@ use SCSEO\Support\SeoMeta;
  * Card tags — everything a page's <head> needs for search and social
  * sharing, generated from Settings\Settings' sitewide defaults and
  * Support\SeoMeta's per-post overrides. Deliberately covers singular
- * posts/pages/CPTs and the front page only for v1 — archives/search/
- * 404 keep WordPress core's own perfectly reasonable defaults rather
- * than this plugin guessing at something to override them with.
+ * posts/pages/CPTs and the front page only for v1 — search/404 keep
+ * WordPress core's own perfectly reasonable defaults rather than this
+ * plugin guessing at something to override them with.
+ *
+ * Archives are the one exception, and only for the three shapes this
+ * site actually produces that are guaranteed near-duplicates of
+ * something else already indexed: the sole author's archive (identical
+ * to the blog itself), date archives (identical to whichever posts they
+ * list), and a tag archive too thin to be a listing at all. Search
+ * Console calling these "crawled/discovered — currently not indexed"
+ * isn't a problem to fix, it's Google correctly declining pages that
+ * were never worth a slot — noindex just says so up front instead of
+ * leaving Google to work it out per page.
  */
 final class HeadOutput implements Hookable
 {
+    /**
+     * A tag archive listing fewer posts than this is a near-duplicate
+     * of the one post it lists (or an empty page, for zero) rather than
+     * a listing — see the class docblock. Also read by SitemapFilters,
+     * so a tag excluded here is excluded from the sitemap too.
+     */
+    public const MIN_INDEXABLE_TAG_COUNT = 2;
+
     public function __construct(private Settings $settings)
     {
     }
@@ -125,6 +143,32 @@ final class HeadOutput implements Hookable
         return ['url' => $src[0], 'width' => (int) $src[1], 'height' => (int) $src[2]];
     }
 
+    /**
+     * Whether the archive being requested is one of the three
+     * near-duplicate shapes covered by the "Noindex thin archives"
+     * setting — see the class docblock. Gated on that setting so
+     * enabling it is a deliberate choice per site, not a behaviour
+     * change every site sharing this plugin inherits silently.
+     */
+    private function isThinArchive(): bool
+    {
+        if (! $this->settings->get('noindex_thin_archives', false)) {
+            return false;
+        }
+
+        if (\is_author() || \is_date()) {
+            return true;
+        }
+
+        if (! \is_tag()) {
+            return false;
+        }
+
+        $term = \get_queried_object();
+
+        return $term instanceof \WP_Term && $term->count < self::MIN_INDEXABLE_TAG_COUNT;
+    }
+
     public function filterRobots(array $robots): array
     {
         $noindex = (bool) $this->settings->get('default_robots_noindex', false);
@@ -136,6 +180,10 @@ final class HeadOutput implements Hookable
             $meta = SeoMeta::read($post->ID);
             $noindex = $noindex || $meta['noindex'];
             $nofollow = $meta['nofollow'];
+        }
+
+        if ($this->isThinArchive()) {
+            $noindex = true;
         }
 
         if ($noindex) {

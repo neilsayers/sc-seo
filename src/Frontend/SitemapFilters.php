@@ -3,6 +3,7 @@
 namespace SCSEO\Frontend;
 
 use SCSEO\Contracts\Hookable;
+use SCSEO\Settings\Settings;
 
 /**
  * WordPress core has served an XML sitemap at /wp-sitemap.xml since
@@ -11,12 +12,49 @@ use SCSEO\Contracts\Hookable;
  * marked noindex here would still show up there. This closes that gap
  * by excluding it from the query core builds the sitemap from, rather
  * than post-filtering entries after the fact.
+ *
+ * Also keeps the sitemap in step with the same two opt-in settings
+ * HeadOutput enforces on the pages themselves — there is no point
+ * submitting a URL to Google that the page it points to has just told
+ * Google to ignore.
  */
 final class SitemapFilters implements Hookable
 {
+    public function __construct(private Settings $settings)
+    {
+    }
+
     public function register(): void
     {
         \add_filter('wp_sitemaps_posts_query_args', [$this, 'excludeNoindexed']);
+        \add_filter('wp_sitemaps_post_types', [$this, 'excludeAttachments']);
+        \add_filter('wp_sitemaps_taxonomies_entry', [$this, 'excludeThinTags'], 10, 2);
+    }
+
+    /**
+     * @param array<string, \WP_Post_Type> $postTypes
+     * @return array<string, \WP_Post_Type>
+     */
+    public function excludeAttachments(array $postTypes): array
+    {
+        if ($this->settings->get('redirect_attachment_pages', false)) {
+            unset($postTypes['attachment']);
+        }
+
+        return $postTypes;
+    }
+
+    /**
+     * @param array<string, mixed> $entry
+     * @return array<string, mixed>
+     */
+    public function excludeThinTags(array $entry, \WP_Term $term): array
+    {
+        if (! $this->settings->get('noindex_thin_archives', false)) {
+            return $entry;
+        }
+
+        return $term->taxonomy === 'post_tag' && $term->count < HeadOutput::MIN_INDEXABLE_TAG_COUNT ? [] : $entry;
     }
 
     public function excludeNoindexed(array $args): array
