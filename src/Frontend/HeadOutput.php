@@ -53,6 +53,15 @@ final class HeadOutput implements Hookable
 
     private function queriedPost(): ?\WP_Post
     {
+        // The posts page (Settings → Reading) is an archive, not a singular
+        // view, but it's a real Page with its own SEO fields — treat it as one.
+        if (\is_home() && ! \is_front_page()) {
+            $postsPage = (int) \get_option('page_for_posts');
+            $post = $postsPage ? \get_post($postsPage) : null;
+
+            return $post instanceof \WP_Post ? $post : null;
+        }
+
         if (! \is_singular()) {
             return null;
         }

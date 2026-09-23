@@ -4,7 +4,7 @@
  * Plugin Name:       SC SEO
  * Plugin URI:        https://screencandy.co.uk
  * Description:       Lean, site-agnostic technical SEO — titles, meta descriptions, Open Graph/Twitter cards, canonical URLs, robots controls, schema.org JSON-LD, and a 301/302 redirect manager. No content-analysis bloat.
- * Version:           0.2.1
+ * Version:           0.2.2
  * Requires at least: 6.6
  * Requires PHP:      8.1
  * Author:            Neil Sayers
@@ -20,7 +20,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-define('SCSEO_VERSION', '0.2.1');
+define('SCSEO_VERSION', '0.2.2');
 define('SCSEO_FILE', __FILE__);
 define('SCSEO_PATH', \plugin_dir_path(__FILE__));
 define('SCSEO_URL', \plugin_dir_url(__FILE__));
