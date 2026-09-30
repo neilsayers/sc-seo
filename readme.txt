@@ -4,7 +4,7 @@ Tags: seo, open graph, schema, structured data, redirects
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.2.2
+Stable tag: 0.2.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -42,6 +42,9 @@ type/hit-count as postmeta), but the front-end match against every incoming requ
 lookup array (rebuilt whenever a redirect changes), not a live database query per request.
 
 == Changelog ==
+
+= 0.2.3 =
+* Sites running this plugin now get the normal "Update available" notice in wp-admin, served from this plugin's GitHub Releases.
 
 = 0.2.2 =
 * Added three opt-in settings (all off by default, so existing sites behave as before): noindex thin archives (single-post
