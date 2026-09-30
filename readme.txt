@@ -4,7 +4,7 @@ Tags: seo, open graph, schema, structured data, redirects
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.2.1
+Stable tag: 0.2.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -42,6 +42,13 @@ type/hit-count as postmeta), but the front-end match against every incoming requ
 lookup array (rebuilt whenever a redirect changes), not a live database query per request.
 
 == Changelog ==
+
+= 0.2.2 =
+* Added three opt-in settings (all off by default, so existing sites behave as before): noindex thin archives (single-post
+  tag archives, the sole author's archive, date archives), redirect attachment pages to their parent, and disable
+  unused RSS/Atom feeds.
+* The posts page (blog index) is now treated as a real page: it gets its own title, canonical URL, meta description and
+  Open Graph tags, where before it had no canonical or description.
 
 = 0.2.1 =
 * Fixed the XML sitemap noindex filter excluding posts with a stray, falsy `_scseo_noindex` postmeta row (e.g. left
