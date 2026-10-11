@@ -15,6 +15,7 @@ use SCSEO\Frontend\SitemapFilters;
 use SCSEO\MetaBoxes\SeoMetaBox;
 use SCSEO\MetaBoxes\SeoMetaFields;
 use SCSEO\MetaBoxes\SeoSidebarPanel;
+use SCSEO\Network\NetworkSettings;
 use SCSEO\PostTypes\RedirectPostType;
 use SCSEO\Settings\Settings;
 
@@ -31,6 +32,8 @@ final class Plugin
 
     private Settings $settings;
 
+    private NetworkSettings $network;
+
     public static function instance(): self
     {
         return self::$instance ??= new self();
@@ -39,12 +42,13 @@ final class Plugin
     private function __construct()
     {
         $this->settings = new Settings();
+        $this->network = new NetworkSettings();
     }
 
     public function boot(): void
     {
         $features = [
-            new SettingsPage($this->settings),
+            new SettingsPage($this->settings, $this->network),
             new RedirectsPage(),
             new DocumentationPage(),
             new RedirectPostType(),
@@ -53,7 +57,7 @@ final class Plugin
             new SeoSidebarPanel(),
             new HeadOutput($this->settings),
             new SchemaOutput($this->settings),
-            new AnalyticsOutput($this->settings),
+            new AnalyticsOutput($this->settings, $this->network),
             new SitemapFilters($this->settings),
             new RedirectHandler(),
             new AttachmentRedirect($this->settings),
@@ -63,6 +67,11 @@ final class Plugin
         foreach ($features as $feature) {
             $feature->register();
         }
+    }
+
+    public function network(): NetworkSettings
+    {
+        return $this->network;
     }
 
     public function settings(): Settings

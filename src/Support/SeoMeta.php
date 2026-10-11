@@ -2,6 +2,8 @@
 
 namespace SCSEO\Support;
 
+use SCSEO\Plugin;
+
 /**
  * Reads/writes every _scseo_* field a single post/page/CPT entry can
  * override — everything MetaBoxes\SeoMetaBox shows, and everything
@@ -19,9 +21,11 @@ final class SeoMeta
     ];
 
     /**
-     * Every public post type gets SC SEO's fields by default —
-     * filterable so a site can add a non-public CPT or drop one it
-     * doesn't want SEO fields on, e.g.
+     * Every public post type gets SC SEO's fields by default, minus
+     * any switched off under SC SEO → General → Post types (stored as
+     * a "disabled" list so a newly registered CPT starts out enabled).
+     * Still filterable so a site can add a non-public CPT or drop one
+     * in code, e.g.
      * add_filter('scseo_metabox_post_types', ...). Shared by the
      * classic metabox, the REST meta registration, and the Gutenberg
      * sidebar panel — MetaBoxes\SeoMetaBox picks the classic-editor
@@ -32,7 +36,10 @@ final class SeoMeta
      */
     public static function eligiblePostTypes(): array
     {
-        $types = \get_post_types(['public' => true, 'show_ui' => true], 'names');
+        $types = \array_diff(
+            \get_post_types(['public' => true, 'show_ui' => true], 'names'),
+            (array) Plugin::instance()->settings()->get('metabox_disabled_post_types', [])
+        );
 
         return \apply_filters('scseo_metabox_post_types', \array_values($types));
     }

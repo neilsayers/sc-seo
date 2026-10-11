@@ -3,6 +3,7 @@
 namespace SCSEO\Admin;
 
 use SCSEO\Contracts\Hookable;
+use SCSEO\Network\NetworkSettings;
 use SCSEO\Settings\Settings;
 
 /**
@@ -23,7 +24,7 @@ final class SettingsPage implements Hookable
         'schema' => 'Business & Schema',
     ];
 
-    public function __construct(private Settings $settings)
+    public function __construct(private Settings $settings, private NetworkSettings $network)
     {
     }
 
@@ -67,11 +68,28 @@ final class SettingsPage implements Hookable
         \wp_enqueue_script('scseo-meta-box', SCSEO_URL.'assets/js/meta-box.js', ['jquery'], SCSEO_VERSION, true);
     }
 
+    /**
+     * The Network tab only exists on a multisite's main site, and only
+     * for super admins — subsite admins never see it.
+     */
+    private function canManageNetwork(): bool
+    {
+        return $this->network->isMainSite() && \is_super_admin();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function tabs(): array
+    {
+        return $this->canManageNetwork() ? self::TABS + ['network' => 'Network'] : self::TABS;
+    }
+
     private function currentTab(): string
     {
         $tab = \sanitize_key((string) ($_GET['tab'] ?? 'general'));
 
-        return \array_key_exists($tab, self::TABS) ? $tab : 'general';
+        return \array_key_exists($tab, $this->tabs()) ? $tab : 'general';
     }
 
     public function handleSave(): void
@@ -85,11 +103,19 @@ final class SettingsPage implements Hookable
         $tab = \sanitize_key((string) ($_POST['tab'] ?? 'general'));
         $data = \wp_unslash($_POST['scseo_settings'] ?? []);
 
-        $this->settings->update(match ($tab) {
-            'social' => $this->sanitizeSocial($data),
-            'schema' => $this->sanitizeSchema($data),
-            default => $this->sanitizeGeneral($data),
-        });
+        if ($tab === 'network') {
+            if (! $this->canManageNetwork()) {
+                \wp_die('You do not have permission to do this.');
+            }
+
+            $this->network->update($this->sanitizeNetwork($data));
+        } else {
+            $this->settings->update(match ($tab) {
+                'social' => $this->sanitizeSocial($data),
+                'schema' => $this->sanitizeSchema($data),
+                default => $this->sanitizeGeneral($data),
+            });
+        }
 
         \add_settings_error('scseo_settings', 'settings-updated', 'Settings saved.', 'success');
         \set_transient('settings_errors', \get_settings_errors(), 30);
@@ -117,7 +143,15 @@ final class SettingsPage implements Hookable
 
         $gaId = \strtoupper(\trim((string) ($data['ga_measurement_id'] ?? '')));
 
+        // The form lists what is switched ON; the stored lists hold what
+        // is switched OFF, so a post type registered later defaults on.
+        $postTypes = \array_keys($this->listedPostTypes());
+        $metaboxOn = \array_map('sanitize_key', (array) ($data['metabox_post_types'] ?? []));
+        $sitemapOn = \array_map('sanitize_key', (array) ($data['sitemap_post_types'] ?? []));
+
         return [
+            'metabox_disabled_post_types' => \array_values(\array_diff($postTypes, $metaboxOn)),
+            'sitemap_excluded_post_types' => \array_values(\array_diff($postTypes, $sitemapOn)),
             'title_separator' => \sanitize_text_field((string) ($data['title_separator'] ?? '–')) ?: '–',
             'home_title' => \sanitize_text_field((string) ($data['home_title'] ?? '')),
             'home_description' => \sanitize_textarea_field((string) ($data['home_description'] ?? '')),
@@ -127,6 +161,20 @@ final class SettingsPage implements Hookable
             'redirect_attachment_pages' => ! empty($data['redirect_attachment_pages']),
             'default_social_image' => (int) ($data['default_social_image'] ?? 0),
             'title_templates' => $templates,
+            'ga_measurement_id' => \preg_match('/^G-[A-Z0-9]+$/', $gaId) ? $gaId : '',
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    private function sanitizeNetwork(array $data): array
+    {
+        $gaId = \strtoupper(\trim((string) ($data['ga_measurement_id'] ?? '')));
+
+        return [
+            'enabled' => ! empty($data['enabled']),
             'ga_measurement_id' => \preg_match('/^G-[A-Z0-9]+$/', $gaId) ? $gaId : '',
         ];
     }
@@ -184,7 +232,7 @@ final class SettingsPage implements Hookable
             <?php \settings_errors('scseo_settings'); ?>
 
             <h2 class="nav-tab-wrapper">
-                <?php foreach (self::TABS as $slug => $label) : ?>
+                <?php foreach ($this->tabs() as $slug => $label) : ?>
                     <a href="<?php echo \esc_url(\admin_url('admin.php?page='.self::PAGE_SLUG.'&tab='.$slug)); ?>" class="nav-tab <?php echo $tab === $slug ? 'nav-tab-active' : ''; ?>"><?php echo \esc_html($label); ?></a>
                 <?php endforeach; ?>
             </h2>
@@ -197,6 +245,7 @@ final class SettingsPage implements Hookable
                 <?php match ($tab) {
                     'social' => $this->renderSocialTab(),
                     'schema' => $this->renderSchemaTab(),
+                    'network' => $this->renderNetworkTab(),
                     default => $this->renderGeneralTab(),
                 }; ?>
 
@@ -206,10 +255,18 @@ final class SettingsPage implements Hookable
         <?php
     }
 
+    /**
+     * @return array<string, \WP_Post_Type>
+     */
+    private function listedPostTypes(): array
+    {
+        return \get_post_types(['public' => true, 'show_ui' => true], 'objects');
+    }
+
     private function renderGeneralTab(): void
     {
         $s = $this->settings;
-        $postTypes = \get_post_types(['public' => true, 'show_ui' => true], 'objects');
+        $postTypes = $this->listedPostTypes();
         $templates = $s->get('title_templates', []);
         ?>
         <table class="form-table" role="presentation">
@@ -271,6 +328,28 @@ final class SettingsPage implements Hookable
                 </td>
             </tr>
             <tr>
+                <th scope="row">Post types</th>
+                <td>
+                    <?php
+                    $metaboxOff = (array) $s->get('metabox_disabled_post_types', []);
+                    $sitemapOff = (array) $s->get('sitemap_excluded_post_types', []);
+                    ?>
+                    <table class="widefat striped" style="max-width:480px">
+                        <thead><tr><th>Post type</th><th>SEO box in editor</th><th>In XML sitemap</th></tr></thead>
+                        <tbody>
+                        <?php foreach ($postTypes as $postType) : ?>
+                            <tr>
+                                <td><?php echo \esc_html($postType->labels->singular_name); ?></td>
+                                <td><input type="checkbox" name="scseo_settings[metabox_post_types][]" value="<?php echo \esc_attr($postType->name); ?>" <?php \checked(! \in_array($postType->name, $metaboxOff, true)); ?>></td>
+                                <td><input type="checkbox" name="scseo_settings[sitemap_post_types][]" value="<?php echo \esc_attr($postType->name); ?>" <?php \checked(! \in_array($postType->name, $sitemapOff, true)); ?>></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                    <p class="description">Untick a post type to hide the SC SEO box from its editor, or to leave it out of the XML sitemap. Hiding the box doesn't delete anything already saved, and pages that already have SEO overrides keep using them on the front end. Newly registered post types start out ticked.</p>
+                </td>
+            </tr>
+            <tr>
                 <th scope="row">Title templates</th>
                 <td>
                     <p class="description" style="margin-top:0">Tokens: <code>%title%</code> <code>%sitename%</code> <code>%sep%</code> <code>%excerpt%</code></p>
@@ -280,6 +359,29 @@ final class SettingsPage implements Hookable
                             <input type="text" name="scseo_settings[title_templates][<?php echo \esc_attr($postType->name); ?>]" value="<?php echo \esc_attr($templates[$postType->name] ?? '%title% %sep% %sitename%'); ?>" class="regular-text">
                         </p>
                     <?php endforeach; ?>
+                </td>
+            </tr>
+        </table>
+        <?php
+    }
+
+    private function renderNetworkTab(): void
+    {
+        $n = $this->network;
+        ?>
+        <table class="form-table" role="presentation">
+            <tr>
+                <th scope="row">Network features</th>
+                <td>
+                    <label><input type="checkbox" name="scseo_settings[enabled]" value="1" <?php \checked($n->get('enabled')); ?>> Turn on network-wide options for every subsite</label>
+                    <p class="description">Off by default. While this is off, the options below do nothing and every site behaves exactly as it would on its own. The plugin must be network-activated for subsites to run it at all.</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="scseo_network_ga">Network Google Analytics</label></th>
+                <td>
+                    <input type="text" id="scseo_network_ga" name="scseo_settings[ga_measurement_id]" value="<?php echo \esc_attr((string) $n->get('ga_measurement_id')); ?>" class="regular-text" placeholder="G-XXXXXXXXXX">
+                    <p class="description">One GA4 property that receives every subsite's traffic, in addition to any property a subsite sets for itself. Each hit carries <code>site_id</code> and <code>site_host</code> parameters; register those as event-scoped custom dimensions in GA (Admin → Custom definitions) to report per site. Sites set to discourage search engines are skipped.</p>
                 </td>
             </tr>
         </table>

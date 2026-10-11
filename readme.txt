@@ -4,7 +4,7 @@ Tags: seo, open graph, schema, structured data, redirects
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.2.3
+Stable tag: 0.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -42,6 +42,13 @@ type/hit-count as postmeta), but the front-end match against every incoming requ
 lookup array (rebuilt whenever a redirect changes), not a live database query per request.
 
 == Changelog ==
+
+= 0.3.0 =
+* Multisite: new Network tab (main site, super admins only) with a master switch, off by default. When on, every
+  subsite also reports to one network-wide GA4 property, tagged with site_id and site_host so reports can be split
+  per site. A subsite's own Measurement ID keeps working alongside it. With the switch off nothing changes.
+* New "Post types" setting (SC SEO → General): hide the SEO box from the editor of any post type, and leave any post
+  type out of the XML sitemap. Both default to on, including for post types registered later.
 
 = 0.2.3 =
 * Sites running this plugin now get the normal "Update available" notice in wp-admin, served from this plugin's GitHub Releases.

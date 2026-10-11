@@ -27,7 +27,7 @@ final class SitemapFilters implements Hookable
     public function register(): void
     {
         \add_filter('wp_sitemaps_posts_query_args', [$this, 'excludeNoindexed']);
-        \add_filter('wp_sitemaps_post_types', [$this, 'excludeAttachments']);
+        \add_filter('wp_sitemaps_post_types', [$this, 'excludePostTypes']);
         \add_filter('wp_sitemaps_taxonomies_entry', [$this, 'excludeThinTags'], 10, 2);
     }
 
@@ -35,10 +35,14 @@ final class SitemapFilters implements Hookable
      * @param array<string, \WP_Post_Type> $postTypes
      * @return array<string, \WP_Post_Type>
      */
-    public function excludeAttachments(array $postTypes): array
+    public function excludePostTypes(array $postTypes): array
     {
         if ($this->settings->get('redirect_attachment_pages', false)) {
             unset($postTypes['attachment']);
+        }
+
+        foreach ((array) $this->settings->get('sitemap_excluded_post_types', []) as $postType) {
+            unset($postTypes[$postType]);
         }
 
         return $postTypes;

@@ -45,6 +45,8 @@ final class Settings
         'default_social_image' => 0,
         'title_templates' => [],
         'ga_measurement_id' => '',
+        'metabox_disabled_post_types' => [],
+        'sitemap_excluded_post_types' => [],
         'facebook_url' => '',
         'twitter_handle' => '',
         'instagram_url' => '',

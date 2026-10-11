@@ -5,6 +5,11 @@ if (! defined('WP_UNINSTALL_PLUGIN')) {
 }
 
 delete_option('scseo_settings');
+
+if (is_multisite()) {
+    delete_site_option('scseo_network');
+}
+
 delete_option('scseo_redirect_cache');
 
 $redirectIds = get_posts([
