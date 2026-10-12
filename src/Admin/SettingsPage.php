@@ -263,6 +263,19 @@ final class SettingsPage implements Hookable
         return \get_post_types(['public' => true, 'show_ui' => true], 'objects');
     }
 
+    /**
+     * Custom post types with an editor but no front-end URL (e.g. a
+     * theme's testimonials). Listed read-only in the Post types table
+     * so it's clear why they have no SEO box. Built-ins (reusable
+     * blocks and the like) are left out as noise.
+     *
+     * @return array<string, \WP_Post_Type>
+     */
+    private function unlistedPostTypes(): array
+    {
+        return \get_post_types(['public' => false, 'show_ui' => true, '_builtin' => false], 'objects');
+    }
+
     private function renderGeneralTab(): void
     {
         $s = $this->settings;
@@ -344,9 +357,16 @@ final class SettingsPage implements Hookable
                                 <td><input type="checkbox" name="scseo_settings[sitemap_post_types][]" value="<?php echo \esc_attr($postType->name); ?>" <?php \checked(! \in_array($postType->name, $sitemapOff, true)); ?>></td>
                             </tr>
                         <?php endforeach; ?>
+                        <?php foreach ($this->unlistedPostTypes() as $postType) : ?>
+                            <tr style="opacity:.55">
+                                <td><?php echo \esc_html($postType->labels->singular_name); ?> <em>(not public)</em></td>
+                                <td><input type="checkbox" disabled></td>
+                                <td><input type="checkbox" disabled></td>
+                            </tr>
+                        <?php endforeach; ?>
                         </tbody>
                     </table>
-                    <p class="description">Untick a post type to hide the SC SEO box from its editor, or to leave it out of the XML sitemap. Hiding the box doesn't delete anything already saved, and pages that already have SEO overrides keep using them on the front end. Newly registered post types start out ticked.</p>
+                    <p class="description">Only public post types can be switched on here. Types with no front-end page of their own are shown greyed out and never get an SEO box or a sitemap entry. Untick a post type to hide the SC SEO box from its editor, or to leave it out of the XML sitemap. Hiding the box doesn't delete anything already saved, and pages that already have SEO overrides keep using them on the front end. Newly registered post types start out ticked.</p>
                 </td>
             </tr>
             <tr>
