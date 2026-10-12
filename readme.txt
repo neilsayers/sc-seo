@@ -4,7 +4,7 @@ Tags: seo, open graph, schema, structured data, redirects
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.3.1
+Stable tag: 0.3.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -42,6 +42,9 @@ type/hit-count as postmeta), but the front-end match against every incoming requ
 lookup array (rebuilt whenever a redirect changes), not a live database query per request.
 
 == Changelog ==
+
+= 0.3.2 =
+* The Post types setting no longer lists non-public post types; a note explains that only public ones appear.
 
 = 0.3.1 =
 * The Post types setting now also lists post types that have an editor but no public pages (shown greyed out, marked
