@@ -4,7 +4,7 @@ Tags: seo, open graph, schema, structured data, redirects
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.3.2
+Stable tag: 0.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -42,6 +42,16 @@ type/hit-count as postmeta), but the front-end match against every incoming requ
 lookup array (rebuilt whenever a redirect changes), not a live database query per request.
 
 == Changelog ==
+
+= 0.4.0 =
+* Cookie consent for Google Analytics. With a Measurement ID set, a small Accept / Reject banner appears and gtag.js is not
+  requested at all until the visitor accepts (no cookies, nothing sent to Google beforehand). The choice is remembered in
+  the browser for 12 months. On by default; SC SEO -> General -> Cookie consent turns it off or changes the wording.
+* The banner is a switch: turn it off under SC SEO -> General -> Cookie consent if another plugin handles consent. While
+  Google Analytics is active and the switch is off, a warning shows on the settings page, Dashboard and Plugins screens.
+* Plain, zero-specificity styling (`:where()`) with BEM classes, state classes on `<html>`, a `scseo:consent` event and
+  `--scseo-consent-*` custom properties for theming; `scseo_consent_enqueue_css` filter drops the stylesheet. See Documentation.
+* `[scseo_cookie_settings]` shortcode (or `data-scseo-consent-open` on any element) lets visitors reopen the banner.
 
 = 0.3.2 =
 * The Post types setting no longer lists non-public post types; a note explains that only public ones appear.

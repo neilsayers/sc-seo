@@ -33,6 +33,50 @@ final class SettingsPage implements Hookable
         \add_action('admin_menu', [$this, 'registerMenu']);
         \add_action('admin_enqueue_scripts', [$this, 'enqueueAssets']);
         \add_action('admin_post_'.self::SAVE_ACTION, [$this, 'handleSave']);
+        \add_action('admin_notices', [$this, 'maybeWarnAboutConsent']);
+    }
+
+    /**
+     * True when GA is going to run on the front end with no consent
+     * step from this plugin — the one combination worth nagging about.
+     * Mirrors AnalyticsOutput: no ID, or a noindex (staging) site, means
+     * GA doesn't run, so there's nothing to warn about.
+     */
+    private function analyticsWithoutConsent(): bool
+    {
+        if ($this->settings->get('consent_banner') || $this->settings->get('default_robots_noindex')) {
+            return false;
+        }
+
+        return (string) $this->settings->get('ga_measurement_id') !== '' || $this->network->gaMeasurementId() !== '';
+    }
+
+    private function consentWarningText(): string
+    {
+        return 'Google Analytics is running on this site with no cookie consent step. Under UK PECR / GDPR analytics cookies need a visitor\'s consent first. Turn on "Cookie consent" in SC SEO → General, or make sure another consent plugin is blocking Google Analytics until visitors accept.';
+    }
+
+    /**
+     * Dashboard and Plugins screens only — the SC SEO settings page shows
+     * the same warning inline right next to the setting.
+     */
+    public function maybeWarnAboutConsent(): void
+    {
+        $screen = \function_exists('get_current_screen') ? \get_current_screen() : null;
+
+        if (! \current_user_can('manage_options') || ! $screen || ! \in_array($screen->id, ['dashboard', 'plugins'], true)) {
+            return;
+        }
+
+        if (! $this->analyticsWithoutConsent()) {
+            return;
+        }
+
+        \printf(
+            '<div class="notice notice-warning"><p><strong>SC SEO:</strong> %1$s <a href="%2$s">Open the setting</a></p></div>',
+            \esc_html($this->consentWarningText()),
+            \esc_url(\admin_url('admin.php?page='.self::PAGE_SLUG))
+        );
     }
 
     public function registerMenu(): void
@@ -162,6 +206,8 @@ final class SettingsPage implements Hookable
             'default_social_image' => (int) ($data['default_social_image'] ?? 0),
             'title_templates' => $templates,
             'ga_measurement_id' => \preg_match('/^G-[A-Z0-9]+$/', $gaId) ? $gaId : '',
+            'consent_banner' => ! empty($data['consent_banner']),
+            'consent_message' => \sanitize_text_field((string) ($data['consent_message'] ?? '')) ?: Settings::DEFAULT_CONSENT_MESSAGE,
         ];
     }
 
@@ -287,6 +333,20 @@ final class SettingsPage implements Hookable
                 <td>
                     <input type="text" id="scseo_ga_measurement_id" name="scseo_settings[ga_measurement_id]" value="<?php echo \esc_attr((string) $s->get('ga_measurement_id')); ?>" class="regular-text" placeholder="G-XXXXXXXXXX">
                     <p class="description">GA4 Measurement ID, from Analytics → Admin → Data Streams. Leave blank and no tracking script is printed at all. Skipped automatically when "Discourage search engines" below is on, so staging traffic never reaches your real property.</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">Cookie consent</th>
+                <td>
+                    <?php if ($this->analyticsWithoutConsent()) : ?>
+                        <div class="notice notice-warning inline" style="margin:0 0 12px"><p><strong>Warning:</strong> <?php echo \esc_html($this->consentWarningText()); ?></p></div>
+                    <?php endif; ?>
+                    <label><input type="checkbox" name="scseo_settings[consent_banner]" value="1" <?php \checked($s->get('consent_banner')); ?>> Show a cookie banner and wait for consent before loading Google Analytics</label>
+                    <p class="description"><strong>On by default, and recommended whenever Google Analytics is used.</strong> Shows a small Accept / Reject banner. Google Analytics is not requested at all until a visitor clicks Accept, so no cookies are set and nothing is sent to Google beforehand — what UK PECR / GDPR expects. The choice is remembered in the visitor's browser for 12 months. Only appears when a Measurement ID is set (above, or network-wide).</p>
+                    <p class="description"><strong>Turn it off</strong> only if another plugin already handles consent (and blocks Google Analytics until visitors accept), or this site doesn't use Google Analytics. Off means Google Analytics loads for every visitor straight away.</p>
+                    <p style="margin-top:12px"><label for="scseo_consent_message"><strong>Banner wording</strong></label><br>
+                    <textarea id="scseo_consent_message" name="scseo_settings[consent_message]" rows="2" class="large-text"><?php echo \esc_textarea((string) $s->get('consent_message')); ?></textarea></p>
+                    <p class="description">A "Privacy policy" link (from Settings → Privacy) is added after it automatically. To let visitors change their mind later, put <code>[scseo_cookie_settings]</code> in a page — the privacy policy is the obvious place — or add <code>data-scseo-consent-open</code> to any button or link. Styling hooks are listed under SC SEO → Documentation.</p>
                 </td>
             </tr>
             <tr>

@@ -32,6 +32,11 @@ final class Settings
         'Corporation' => 'Corporation',
     ];
 
+    /**
+     * Shown in the cookie banner until the site sets its own wording.
+     */
+    public const DEFAULT_CONSENT_MESSAGE = 'We use Google Analytics cookies to understand how this site is used. Nothing is sent to Google unless you accept.';
+
     private const LOCAL_TYPES = ['LocalBusiness', 'ProfessionalService', 'Store', 'Restaurant'];
 
     private const DEFAULTS = [
@@ -45,6 +50,8 @@ final class Settings
         'default_social_image' => 0,
         'title_templates' => [],
         'ga_measurement_id' => '',
+        'consent_banner' => true,
+        'consent_message' => self::DEFAULT_CONSENT_MESSAGE,
         'metabox_disabled_post_types' => [],
         'sitemap_excluded_post_types' => [],
         'facebook_url' => '',

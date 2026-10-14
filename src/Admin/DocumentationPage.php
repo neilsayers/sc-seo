@@ -77,6 +77,38 @@ final class DocumentationPage implements Hookable
     return $types;
 });</pre>
 
+            <h2>Cookie consent banner</h2>
+            <p>
+                Settings: SC SEO &rarr; General &rarr; Cookie consent. On by default; while a Google Analytics ID is set it
+                holds back Google Analytics until a visitor clicks Accept. Turn it off only if another plugin handles
+                consent. The stylesheet is plain on purpose and every rule has zero specificity (<code>:where()</code>), so
+                any selector in the theme overrides it. To drop it altogether:
+            </p>
+            <pre>add_filter('scseo_consent_enqueue_css', '__return_false');</pre>
+            <table class="widefat striped" style="max-width: 700px;">
+                <thead><tr><th>Class / hook</th><th>What it is</th></tr></thead>
+                <tbody>
+                    <tr><td><code>.scseo-consent</code></td><td>The banner. <code>[data-scseo-consent-state]</code> is <code>unset</code>, <code>granted</code> or <code>denied</code>; <code>.is-open</code> while showing</td></tr>
+                    <tr><td><code>.scseo-consent__inner</code></td><td>Layout wrapper (flex)</td></tr>
+                    <tr><td><code>.scseo-consent__text</code> / <code>__message</code> / <code>__link</code></td><td>The paragraph, the wording, the privacy policy link</td></tr>
+                    <tr><td><code>.scseo-consent__actions</code></td><td>The button row</td></tr>
+                    <tr><td><code>.scseo-consent__btn</code></td><td>Both buttons; <code>--accept</code> and <code>--reject</code> modifiers for each</td></tr>
+                    <tr><td><code>.scseo-consent-reopen</code></td><td>The <code>[scseo_cookie_settings]</code> button (or put <code>data-scseo-consent-open</code> on anything)</td></tr>
+                    <tr><td><code>html.scseo-consent-open</code>, <code>-unset</code>, <code>-granted</code>, <code>-denied</code></td><td>State classes on <code>&lt;html&gt;</code></td></tr>
+                    <tr><td><code>scseo:consent</code> event</td><td>Fired on <code>document</code> when a choice is made; <code>event.detail.choice</code> is <code>granted</code> or <code>denied</code></td></tr>
+                </tbody>
+            </table>
+            <p>Custom properties to set on <code>.scseo-consent</code> (all optional):</p>
+            <pre>--scseo-consent-bg, --scseo-consent-text, --scseo-consent-border, --scseo-consent-link,
+--scseo-consent-btn-bg, --scseo-consent-btn-text, --scseo-consent-btn-border,
+--scseo-consent-accept-bg / -text / -border, --scseo-consent-reject-bg / -text / -border,
+--scseo-consent-radius, --scseo-consent-padding, --scseo-consent-gap, --scseo-consent-width,
+--scseo-consent-offset, --scseo-consent-font-size, --scseo-consent-z-index</pre>
+            <p>
+                The choice is stored in the visitor's <code>localStorage</code> under <code>scseo_consent</code> for 12 months.
+                A headless front end can read and write the same key to share the choice.
+            </p>
+
             <h2>Redirects CSV format</h2>
             <p>Three columns, header row optional:</p>
             <pre>source,destination,type

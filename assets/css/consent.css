@@ -1,0 +1,139 @@
+/*
+ * Cookie banner — deliberately plain. Every rule is wrapped in :where(),
+ * which has zero specificity, so ANY selector in a theme beats it without
+ * !important or specificity games. Restyle by overriding the custom
+ * properties on .scseo-consent, or by writing your own rules for the
+ * classes below. To drop this stylesheet entirely:
+ *
+ *   add_filter('scseo_consent_enqueue_css', '__return_false');
+ *
+ * Markup:
+ *
+ *   .scseo-consent                    the banner ([data-scseo-consent-state]
+ *                                     = unset | granted | denied; .is-open
+ *                                     while showing)
+ *     .scseo-consent__inner           layout wrapper
+ *       .scseo-consent__text          the paragraph
+ *         .scseo-consent__message     the wording
+ *         .scseo-consent__link        the privacy policy link
+ *       .scseo-consent__actions       button row
+ *         .scseo-consent__btn         both buttons
+ *         .scseo-consent__btn--reject
+ *         .scseo-consent__btn--accept
+ *
+ *   .scseo-consent-reopen             the [scseo_cookie_settings] button
+ *
+ *   html.scseo-consent-open | -unset | -granted | -denied   state on <html>
+ */
+
+:where(.scseo-consent) {
+    --scseo-consent-bg: #fff;
+    --scseo-consent-text: #111;
+    --scseo-consent-border: #111;
+    --scseo-consent-link: currentColor;
+    --scseo-consent-btn-bg: #fff;
+    --scseo-consent-btn-text: #111;
+    --scseo-consent-btn-border: #111;
+    --scseo-consent-accept-bg: var(--scseo-consent-btn-bg);
+    --scseo-consent-accept-text: var(--scseo-consent-btn-text);
+    --scseo-consent-accept-border: var(--scseo-consent-btn-border);
+    --scseo-consent-reject-bg: var(--scseo-consent-btn-bg);
+    --scseo-consent-reject-text: var(--scseo-consent-btn-text);
+    --scseo-consent-reject-border: var(--scseo-consent-btn-border);
+    --scseo-consent-radius: 0;
+    --scseo-consent-padding: 1rem;
+    --scseo-consent-gap: 0.75rem;
+    --scseo-consent-width: 40rem;
+    --scseo-consent-offset: 1rem;
+    --scseo-consent-font-size: 1rem;
+    --scseo-consent-z-index: 99999;
+
+    position: fixed;
+    inset: auto var(--scseo-consent-offset) var(--scseo-consent-offset);
+    z-index: var(--scseo-consent-z-index);
+    box-sizing: border-box;
+    max-width: var(--scseo-consent-width);
+    margin-inline: auto;
+    padding: var(--scseo-consent-padding);
+    background: var(--scseo-consent-bg);
+    color: var(--scseo-consent-text);
+    border: 1px solid var(--scseo-consent-border);
+    border-radius: var(--scseo-consent-radius);
+    font-size: var(--scseo-consent-font-size);
+    line-height: 1.5;
+}
+
+:where(.scseo-consent[hidden]) {
+    display: none;
+}
+
+:where(.scseo-consent__inner) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--scseo-consent-gap) calc(var(--scseo-consent-gap) * 2);
+}
+
+:where(.scseo-consent__text) {
+    flex: 1 1 16rem;
+    margin: 0;
+}
+
+:where(.scseo-consent__link) {
+    color: var(--scseo-consent-link);
+    text-decoration: underline;
+}
+
+:where(.scseo-consent__actions) {
+    display: flex;
+    flex: 0 0 auto;
+    gap: calc(var(--scseo-consent-gap) / 2);
+}
+
+/* Reject and Accept share one look by default — equal prominence. */
+:where(.scseo-consent__btn) {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--scseo-consent-btn-border);
+    border-radius: var(--scseo-consent-radius);
+    background: var(--scseo-consent-btn-bg);
+    color: var(--scseo-consent-btn-text);
+    font: inherit;
+    cursor: pointer;
+}
+
+:where(.scseo-consent__btn--accept) {
+    background: var(--scseo-consent-accept-bg);
+    color: var(--scseo-consent-accept-text);
+    border-color: var(--scseo-consent-accept-border);
+}
+
+:where(.scseo-consent__btn--reject) {
+    background: var(--scseo-consent-reject-bg);
+    color: var(--scseo-consent-reject-text);
+    border-color: var(--scseo-consent-reject-border);
+}
+
+:where(.scseo-consent__btn:focus-visible, .scseo-consent__link:focus-visible) {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+    :where(.scseo-consent__actions) {
+        width: 100%;
+    }
+
+    :where(.scseo-consent__btn) {
+        flex: 1;
+    }
+}
+
+:where(.scseo-consent-reopen) {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
