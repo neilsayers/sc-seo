@@ -4,7 +4,7 @@ Tags: seo, open graph, schema, structured data, redirects
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.4.0
+Stable tag: 0.4.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -42,6 +42,11 @@ type/hit-count as postmeta), but the front-end match against every incoming requ
 lookup array (rebuilt whenever a redirect changes), not a live database query per request.
 
 == Changelog ==
+
+= 0.4.1 =
+* Fixed a fatal error (TypeError in SitemapFilters::excludeThinTags) every time the tag sitemap was built with "Noindex
+  thin archive pages" on: WordPress passes a term ID to that filter, not a WP_Term. Thin tags are now excluded from the
+  sitemap at query level, which also stops the old approach's empty `<url>` entries.
 
 = 0.4.0 =
 * Cookie consent for Google Analytics. With a Measurement ID set, a small Accept / Reject banner appears and gtag.js is not

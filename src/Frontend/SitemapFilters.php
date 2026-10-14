@@ -28,7 +28,7 @@ final class SitemapFilters implements Hookable
     {
         \add_filter('wp_sitemaps_posts_query_args', [$this, 'excludeNoindexed']);
         \add_filter('wp_sitemaps_post_types', [$this, 'excludePostTypes']);
-        \add_filter('wp_sitemaps_taxonomies_entry', [$this, 'excludeThinTags'], 10, 2);
+        \add_filter('wp_sitemaps_taxonomies_query_args', [$this, 'excludeThinTags'], 10, 2);
     }
 
     /**
@@ -49,16 +49,48 @@ final class SitemapFilters implements Hookable
     }
 
     /**
-     * @param array<string, mixed> $entry
+     * Keeps tags the head output noindexes (see HeadOutput::
+     * MIN_INDEXABLE_TAG_COUNT) out of the taxonomy sitemap.
+     *
+     * Done on the term query, not the per-entry filter: that one can't
+     * drop an entry (returning [] still writes an empty <url> with no
+     * <loc>), and it hands over the term ID, not a WP_Term. Excluding at
+     * query level also keeps core's page count right, since it reads
+     * the same arguments.
+     *
+     * @param array<string, mixed> $args
      * @return array<string, mixed>
      */
-    public function excludeThinTags(array $entry, \WP_Term $term): array
+    public function excludeThinTags(array $args, string $taxonomy): array
     {
-        if (! $this->settings->get('noindex_thin_archives', false)) {
-            return $entry;
+        if ($taxonomy !== 'post_tag' || ! $this->settings->get('noindex_thin_archives', false)) {
+            return $args;
         }
 
-        return $term->taxonomy === 'post_tag' && $term->count < HeadOutput::MIN_INDEXABLE_TAG_COUNT ? [] : $entry;
+        $thin = \get_terms([
+            'taxonomy' => 'post_tag',
+            'hide_empty' => false,
+            'fields' => 'all',
+            'update_term_meta_cache' => false,
+        ]);
+
+        if (\is_wp_error($thin)) {
+            return $args;
+        }
+
+        $ids = [];
+
+        foreach ($thin as $term) {
+            if ($term->count < HeadOutput::MIN_INDEXABLE_TAG_COUNT) {
+                $ids[] = $term->term_id;
+            }
+        }
+
+        if ($ids !== []) {
+            $args['exclude'] = \array_merge((array) ($args['exclude'] ?? []), $ids);
+        }
+
+        return $args;
     }
 
     public function excludeNoindexed(array $args): array
