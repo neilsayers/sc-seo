@@ -49,6 +49,21 @@ final class HeadOutput implements Hookable
         \add_filter('pre_get_document_title', [$this, 'filterTitle']);
         \add_filter('wp_robots', [$this, 'filterRobots']);
         \add_action('wp_head', [$this, 'renderHead'], 1);
+        \add_action('wp_head', [$this, 'renderVerification'], 1);
+    }
+
+    /**
+     * The Google Search Console "HTML tag" ownership meta, on the home page
+     * only (the page Google fetches to check it). Independent of renderHead(),
+     * which prints nothing on a blog-index home page.
+     */
+    public function renderVerification(): void
+    {
+        $code = (string) $this->settings->get('search_console_verification');
+
+        if ($code !== '' && \is_front_page()) {
+            printf('<meta name="google-site-verification" content="%s">'."\n", \esc_attr($code));
+        }
     }
 
     private function queriedPost(): ?\WP_Post

@@ -4,7 +4,7 @@ Tags: seo, open graph, schema, structured data, redirects
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.4.1
+Stable tag: 0.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -42,6 +42,11 @@ type/hit-count as postmeta), but the front-end match against every incoming requ
 lookup array (rebuilt whenever a redirect changes), not a live database query per request.
 
 == Changelog ==
+
+= 0.5.0 =
+* Google Search Console verification. SC SEO -> General -> Google Search Console takes the code from Search Console's "HTML
+  tag" method (the whole pasted tag works too) and prints the google-site-verification meta tag on the home page. Blank
+  prints nothing.
 
 = 0.4.1 =
 * Fixed a fatal error (TypeError in SitemapFilters::excludeThinTags) every time the tag sitemap was built with "Noindex

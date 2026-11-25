@@ -187,6 +187,14 @@ final class SettingsPage implements Hookable
 
         $gaId = \strtoupper(\trim((string) ($data['ga_measurement_id'] ?? '')));
 
+        // Google Search Console "HTML tag" code. Accepts the whole pasted
+        // <meta> tag as well as just the code, and keeps only the code.
+        $verification = \trim((string) ($data['search_console_verification'] ?? ''));
+
+        if (\preg_match('/content=["\']([^"\']+)["\']/', $verification, $verificationMatch)) {
+            $verification = $verificationMatch[1];
+        }
+
         // The form lists what is switched ON; the stored lists hold what
         // is switched OFF, so a post type registered later defaults on.
         $postTypes = \array_keys($this->listedPostTypes());
@@ -206,6 +214,7 @@ final class SettingsPage implements Hookable
             'default_social_image' => (int) ($data['default_social_image'] ?? 0),
             'title_templates' => $templates,
             'ga_measurement_id' => \preg_match('/^G-[A-Z0-9]+$/', $gaId) ? $gaId : '',
+            'search_console_verification' => \preg_match('/^[A-Za-z0-9_-]{20,100}$/', $verification) ? $verification : '',
             'consent_banner' => ! empty($data['consent_banner']),
             'consent_message' => \sanitize_text_field((string) ($data['consent_message'] ?? '')) ?: Settings::DEFAULT_CONSENT_MESSAGE,
         ];
@@ -333,6 +342,13 @@ final class SettingsPage implements Hookable
                 <td>
                     <input type="text" id="scseo_ga_measurement_id" name="scseo_settings[ga_measurement_id]" value="<?php echo \esc_attr((string) $s->get('ga_measurement_id')); ?>" class="regular-text" placeholder="G-XXXXXXXXXX">
                     <p class="description">GA4 Measurement ID, from Analytics → Admin → Data Streams. Leave blank and no tracking script is printed at all. Skipped automatically when "Discourage search engines" below is on, so staging traffic never reaches your real property.</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="scseo_search_console_verification">Google Search Console</label></th>
+                <td>
+                    <input type="text" id="scseo_search_console_verification" name="scseo_settings[search_console_verification]" value="<?php echo \esc_attr((string) $s->get('search_console_verification')); ?>" class="regular-text" placeholder="e_DYMA8-w6A3…">
+                    <p class="description">Ownership check by "HTML tag": in Search Console choose the HTML tag method and paste the code from inside <code>content="…"</code> (pasting the whole tag works too). It is printed on the home page only. Leave blank for none. The Google Analytics method can't verify a site that holds Analytics back until consent, which is why this is separate.</p>
                 </td>
             </tr>
             <tr>
