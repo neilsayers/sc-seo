@@ -50,6 +50,7 @@ final class Settings
         'default_social_image' => 0,
         'title_templates' => [],
         'ga_measurement_id' => '',
+        'disable_analytics' => false,
         'search_console_verification' => '',
         'consent_banner' => true,
         'consent_message' => self::DEFAULT_CONSENT_MESSAGE,

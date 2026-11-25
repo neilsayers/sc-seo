@@ -4,7 +4,7 @@ Tags: seo, open graph, schema, structured data, redirects
 Requires at least: 6.6
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 0.5.0
+Stable tag: 0.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -42,6 +42,11 @@ type/hit-count as postmeta), but the front-end match against every incoming requ
 lookup array (rebuilt whenever a redirect changes), not a live database query per request.
 
 == Changelog ==
+
+= 0.6.0 =
+* "Disable analytics output" checkbox (SC SEO -> General, under Google Analytics). For sites whose theme or another
+  plugin loads Google Analytics itself: prints no Analytics script, cookie banner or banner assets, and the
+  [scseo_cookie_settings] shortcode renders empty. The saved Measurement ID and banner wording are kept.
 
 = 0.5.0 =
 * Google Search Console verification. SC SEO -> General -> Google Search Console takes the code from Search Console's "HTML

@@ -32,6 +32,16 @@ final class AnalyticsOutput implements Hookable
 
     public function register(): void
     {
+        // "Disable analytics output": the site loads GA itself (its own
+        // consent screen, say). Print nothing — no loader, no banner, no
+        // assets — and have the settings-link shortcode render empty rather
+        // than leave its raw [tag] showing in a page.
+        if ($this->settings->get('disable_analytics')) {
+            \add_shortcode('scseo_cookie_settings', '__return_empty_string');
+
+            return;
+        }
+
         \add_action('wp_head', [$this, 'renderTag'], 1);
         \add_action('wp_enqueue_scripts', [$this, 'enqueueAssets']);
         \add_action('wp_footer', [$this, 'renderBanner']);

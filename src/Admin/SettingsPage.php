@@ -44,7 +44,7 @@ final class SettingsPage implements Hookable
      */
     private function analyticsWithoutConsent(): bool
     {
-        if ($this->settings->get('consent_banner') || $this->settings->get('default_robots_noindex')) {
+        if ($this->settings->get('consent_banner') || $this->settings->get('default_robots_noindex') || $this->settings->get('disable_analytics')) {
             return false;
         }
 
@@ -214,6 +214,7 @@ final class SettingsPage implements Hookable
             'default_social_image' => (int) ($data['default_social_image'] ?? 0),
             'title_templates' => $templates,
             'ga_measurement_id' => \preg_match('/^G-[A-Z0-9]+$/', $gaId) ? $gaId : '',
+            'disable_analytics' => ! empty($data['disable_analytics']),
             'search_console_verification' => \preg_match('/^[A-Za-z0-9_-]{20,100}$/', $verification) ? $verification : '',
             'consent_banner' => ! empty($data['consent_banner']),
             'consent_message' => \sanitize_text_field((string) ($data['consent_message'] ?? '')) ?: Settings::DEFAULT_CONSENT_MESSAGE,
@@ -342,6 +343,8 @@ final class SettingsPage implements Hookable
                 <td>
                     <input type="text" id="scseo_ga_measurement_id" name="scseo_settings[ga_measurement_id]" value="<?php echo \esc_attr((string) $s->get('ga_measurement_id')); ?>" class="regular-text" placeholder="G-XXXXXXXXXX">
                     <p class="description">GA4 Measurement ID, from Analytics → Admin → Data Streams. Leave blank and no tracking script is printed at all. Skipped automatically when "Discourage search engines" below is on, so staging traffic never reaches your real property.</p>
+                    <p style="margin-top:8px"><label><input type="checkbox" name="scseo_settings[disable_analytics]" value="1" <?php \checked($s->get('disable_analytics')); ?>> Disable analytics output from this plugin</label></p>
+                    <p class="description">Tick this when the site's theme or another plugin loads Google Analytics itself (for example with its own consent screen). SC SEO then prints no Analytics script, no cookie banner and no banner styles or scripts, so you don't get two copies counting every visit. Your Measurement ID and banner wording stay saved, so unticking it brings everything back. The Search Console verification tag is unaffected.</p>
                 </td>
             </tr>
             <tr>
